@@ -8,7 +8,12 @@ import {
 } from '../components/ui.jsx';
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline';
 
-const TYPE_FILTERS = [{ value: '', label: 'All' }, ...LISTING_TYPES];
+const TYPE_FILTERS = [
+  { value: '', label: 'All' },
+  { value: 'borrow', label: 'Borrow', tooltip: 'Ask neighbours if they have something you need' },
+  { value: 'cobuy',  label: 'Co-buy',  tooltip: 'Split the cost of a bulk item with others' },
+  { value: 'offer',  label: 'Offer',   tooltip: 'Give away something you no longer need' },
+];
 const RES_FILTERS  = [
   { value: '', label: 'All residences' },
   ...RESIDENCES.map((r) => ({ value: r.value, label: r.label })),
@@ -131,17 +136,27 @@ function SegmentedControl({ value, onChange, options }) {
       {options.map((opt) => {
         const active = value === opt.value;
         return (
-          <button
-            key={opt.value ?? 'all'}
-            onClick={() => onChange(opt.value)}
-            className={`px-3 h-7 rounded-[7px] text-footnote font-medium transition-all ${
-              active
-                ? 'bg-white text-ink-900 shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
-                : 'text-ink-500'
-            }`}
-          >
-            {opt.label}
-          </button>
+          <div key={opt.value ?? 'all'} className="relative group">
+            <button
+              onClick={() => onChange(opt.value)}
+              className={`px-3 h-7 rounded-[7px] text-footnote font-medium transition-all ${
+                active
+                  ? 'bg-white text-ink-900 shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
+                  : 'text-ink-500'
+              }`}
+            >
+              {opt.label}
+            </button>
+            {opt.tooltip && (
+              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20
+                              opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <div className="bg-ink-900 text-white text-[11px] font-medium px-2.5 py-1.5 rounded-[6px] whitespace-nowrap">
+                  {opt.tooltip}
+                </div>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-ink-900" />
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

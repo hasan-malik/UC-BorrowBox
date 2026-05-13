@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../auth.js';
+import { sendListingPostedEmail } from '../email.js';
 
 const router = Router();
 
@@ -59,6 +60,10 @@ router.post('/', requireAuth, async (req, res) => {
      RETURNING id, type, title, description, status, created_at`,
     [req.user.id, type, title.trim(), (description || '').trim()]
   );
+
+  const { rows: userRows } = await query('SELECT email, name FROM users WHERE id=$1', [req.user.id]);
+  try { await sendListingPostedEmail(userRows[0].email, userRows[0].name, rows[0]); } catch {}
+
   res.json({ listing: rows[0] });
 });
 

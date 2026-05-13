@@ -56,15 +56,15 @@ export function NavBar({ user, onLogout }) {
               >
                 <PlusIcon className="w-4 h-4" />
               </Link>
-              <button
-                onClick={onLogout}
+              <Link
+                to="/settings"
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-ink-100 transition active:opacity-70"
-                aria-label="Account"
+                aria-label="Settings"
               >
                 <span className="text-footnote font-semibold text-ink-700 leading-none">
                   {user.name[0].toUpperCase()}
                 </span>
-              </button>
+              </Link>
             </>
           ) : (
             <Link

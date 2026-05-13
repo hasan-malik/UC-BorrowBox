@@ -8,6 +8,7 @@ import Signup from './pages/Signup.jsx';
 import Verify from './pages/Verify.jsx';
 import NewListing from './pages/NewListing.jsx';
 import ListingDetail from './pages/ListingDetail.jsx';
+import Settings from './pages/Settings.jsx';
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/signup"       element={<Signup />} />
           <Route path="/verify"       element={<Verify />} />
           <Route path="/new"          element={<Protected><NewListing /></Protected>} />
+          <Route path="/settings"     element={<Protected><Settings /></Protected>} />
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="*"             element={<Navigate to="/" replace />} />
         </Routes>

@@ -27,9 +27,12 @@ export function AuthProvider({ children }) {
     setToken(null);
     setUser(null);
   }
+  function updateUser(patch) {
+    setUser((u) => ({ ...u, ...patch }));
+  }
 
   return (
-    <AuthCtx.Provider value={{ user, loading, login, logout }}>
+    <AuthCtx.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthCtx.Provider>
   );

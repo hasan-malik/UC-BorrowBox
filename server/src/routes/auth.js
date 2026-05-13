@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../db.js';
 import { signToken, requireAuth } from '../auth.js';
-import { sendOtpEmail } from '../email.js';
+import { sendOtpEmail, sendWelcomeEmail, sendLoginAlertEmail } from '../email.js';
 
 const router = Router();
 
@@ -92,6 +92,8 @@ router.post('/verify', async (req, res) => {
     [user.id]
   );
 
+  try { await sendWelcomeEmail(user.email, user.name); } catch {}
+
   const token = signToken(user);
   res.json({
     token,
@@ -135,6 +137,8 @@ router.post('/login', async (req, res) => {
     return res.status(403).json({ error: 'Email not yet verified', needsVerification: true });
   }
 
+  try { await sendLoginAlertEmail(user.email, user.name); } catch {}
+
   const token = signToken(user);
   res.json({
     token,
@@ -148,6 +152,26 @@ router.get('/me', requireAuth, async (req, res) => {
     [req.user.id]
   );
   if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+  res.json({ user: rows[0] });
+});
+
+router.patch('/me', requireAuth, async (req, res) => {
+  const { residence, term } = req.body || {};
+  if (residence && !RESIDENCES.has(residence)) return res.status(400).json({ error: 'Invalid residence' });
+  if (term && !TERMS.has(term)) return res.status(400).json({ error: 'Invalid term' });
+  if (!residence && !term) return res.status(400).json({ error: 'Nothing to update' });
+
+  const sets = [];
+  const vals = [];
+  if (residence) { vals.push(residence); sets.push(`residence=$${vals.length}`); }
+  if (term)      { vals.push(term);      sets.push(`term=$${vals.length}`); }
+  vals.push(req.user.id);
+  await query(`UPDATE users SET ${sets.join(', ')} WHERE id=$${vals.length}`, vals);
+
+  const { rows } = await query(
+    'SELECT id, email, name, residence, term FROM users WHERE id=$1',
+    [req.user.id]
+  );
   res.json({ user: rows[0] });
 });
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../auth.js';
+import { sendReplyNotificationEmail } from '../email.js';
 
 const router = Router({ mergeParams: true });
 
@@ -29,6 +30,27 @@ router.post('/listings/:id/comments', requireAuth, async (req, res) => {
      RETURNING id, body, created_at`,
     [req.params.id, req.user.id, body.trim()]
   );
+
+  // Notify listing owner (skip if they're replying to their own listing)
+  const { rows: meta } = await query(
+    `SELECT l.title, l.user_id, u.email AS owner_email, u.name AS owner_name,
+            cu.name AS commenter_name
+       FROM listings l
+       JOIN users u  ON u.id  = l.user_id
+       JOIN users cu ON cu.id = $2
+      WHERE l.id = $1`,
+    [req.params.id, req.user.id]
+  );
+  if (meta[0] && meta[0].user_id !== req.user.id) {
+    try {
+      await sendReplyNotificationEmail(meta[0].owner_email, meta[0].owner_name, {
+        commenterName: meta[0].commenter_name,
+        listingTitle:  meta[0].title,
+        commentBody:   body.trim(),
+      });
+    } catch {}
+  }
+
   res.json({ comment: rows[0] });
 });
 
