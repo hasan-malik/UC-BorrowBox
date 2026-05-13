@@ -7,11 +7,10 @@ html, body, #root {
 }
 
 body {
-  background: #ffffff;
-  color: #111111;
+  background: #f2f2f7;   /* iOS systemGroupedBackground */
+  color: #1c1c1e;         /* iOS label */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'ss01', 'cv11';
 }
 
 input, textarea, select, button {
@@ -27,9 +26,13 @@ input:focus, textarea:focus, select:focus {
   outline: none;
 }
 
-/* Remove number input spinners */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* iOS-style tap highlight */
+button, a {
+  -webkit-tap-highlight-color: transparent;
 }
