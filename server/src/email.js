@@ -1,12 +1,19 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
+const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+
+const transporter = SMTP_HOST && SMTP_USER && SMTP_PASS
+  ? nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: Number(SMTP_PORT || 587),
+      secure: Number(SMTP_PORT) === 465,
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+    })
   : null;
 
 export async function sendOtpEmail(to, code) {
-  if (!resend) {
+  if (!transporter) {
     console.log('\n────────── DEV OTP ──────────');
     console.log(`  To:   ${to}`);
     console.log(`  Code: ${code}`);
@@ -14,9 +21,9 @@ export async function sendOtpEmail(to, code) {
     return;
   }
 
-  await resend.emails.send({
-    from: process.env.RESEND_FROM || 'UC BorrowBox <onboarding@resend.dev>',
-    to: [to],
+  await transporter.sendMail({
+    from: `UC BorrowBox <${SMTP_USER}>`,
+    to,
     subject: 'Your UC BorrowBox verification code',
     html: `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:400px;margin:0 auto;padding:32px 24px">
