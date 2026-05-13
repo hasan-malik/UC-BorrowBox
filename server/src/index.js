@@ -6,7 +6,13 @@ import listingsRoutes from './routes/listings.js';
 import commentsRoutes from './routes/comments.js';
 
 const app = express();
-app.use(cors());
+
+const clientOrigin = process.env.CLIENT_ORIGIN;
+app.use(cors({
+  origin: clientOrigin
+    ? clientOrigin.split(',').map((s) => s.trim()).filter(Boolean)
+    : true,
+}));
 app.use(express.json());
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));

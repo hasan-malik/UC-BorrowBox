@@ -1,4 +1,5 @@
 const TOKEN_KEY = 'ucbb_token';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -14,7 +15,7 @@ export async function api(path, { method = 'GET', body, auth = false } = {}) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
   }
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${API_BASE}/api${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
