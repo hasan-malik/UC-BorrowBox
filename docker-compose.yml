@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ucbb-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ucbb
+      POSTGRES_PASSWORD: ucbb_dev
+      POSTGRES_DB: ucbb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
