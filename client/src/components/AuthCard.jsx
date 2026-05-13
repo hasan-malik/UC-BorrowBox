@@ -5,9 +5,9 @@ export default function AuthCard({ title, subtitle, children, footer }) {
         {/* Sheet card */}
         <div className="bg-white rounded-sheet shadow-sheet px-6 pt-7 pb-6">
           <div className="mb-6">
-            <h1 className="text-title-2 text-ink-900">{title}</h1>
+            <h1 className="text-[28px] font-bold tracking-[-0.5px] leading-tight text-ink-900">{title}</h1>
             {subtitle && (
-              <p className="text-subhead text-ink-500 mt-1">{subtitle}</p>
+              <p className="text-[15px] text-ink-500 mt-1.5">{subtitle}</p>
             )}
           </div>
           {children}
