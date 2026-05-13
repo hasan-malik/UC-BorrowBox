@@ -6,9 +6,12 @@ const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 const transporter = SMTP_HOST && SMTP_USER && SMTP_PASS
   ? nodemailer.createTransport({
       host: SMTP_HOST,
-      port: Number(SMTP_PORT || 587),
-      secure: Number(SMTP_PORT) === 465,
+      port: Number(SMTP_PORT || 465),
+      secure: Number(SMTP_PORT || 465) === 465,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 10000,
     })
   : null;
 

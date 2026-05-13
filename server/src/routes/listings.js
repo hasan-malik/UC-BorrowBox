@@ -61,8 +61,9 @@ router.post('/', requireAuth, async (req, res) => {
     [req.user.id, type, title.trim(), (description || '').trim()]
   );
 
-  const { rows: userRows } = await query('SELECT email, name FROM users WHERE id=$1', [req.user.id]);
-  try { await sendListingPostedEmail(userRows[0].email, userRows[0].name, rows[0]); } catch {}
+  query('SELECT email, name FROM users WHERE id=$1', [req.user.id])
+    .then(({ rows: u }) => sendListingPostedEmail(u[0].email, u[0].name, rows[0]))
+    .catch(() => {});
 
   res.json({ listing: rows[0] });
 });

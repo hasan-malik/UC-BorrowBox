@@ -56,11 +56,7 @@ router.post('/signup', async (req, res) => {
     );
   }
 
-  try {
-    await sendOtpEmail(normalizedEmail, otp);
-  } catch (err) {
-    console.error('Failed to send OTP email:', err);
-  }
+  sendOtpEmail(normalizedEmail, otp).catch((err) => console.error('OTP email failed:', err));
 
   res.json({ ok: true, message: 'Verification code sent. Check your utoronto email.' });
 });
@@ -92,7 +88,7 @@ router.post('/verify', async (req, res) => {
     [user.id]
   );
 
-  try { await sendWelcomeEmail(user.email, user.name); } catch {}
+  sendWelcomeEmail(user.email, user.name).catch(() => {});
 
   const token = signToken(user);
   res.json({
@@ -112,11 +108,7 @@ router.post('/resend', async (req, res) => {
   const otp = genOtp();
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
   await query('UPDATE users SET otp_code=$1, otp_expires_at=$2 WHERE id=$3', [otp, otpExpires, rows[0].id]);
-  try {
-    await sendOtpEmail(normalizedEmail, otp);
-  } catch (err) {
-    console.error('Failed to send OTP email:', err);
-  }
+  sendOtpEmail(normalizedEmail, otp).catch((err) => console.error('OTP email failed:', err));
   res.json({ ok: true });
 });
 
@@ -137,7 +129,7 @@ router.post('/login', async (req, res) => {
     return res.status(403).json({ error: 'Email not yet verified', needsVerification: true });
   }
 
-  try { await sendLoginAlertEmail(user.email, user.name); } catch {}
+  sendLoginAlertEmail(user.email, user.name).catch(() => {});
 
   const token = signToken(user);
   res.json({

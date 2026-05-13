@@ -42,13 +42,11 @@ router.post('/listings/:id/comments', requireAuth, async (req, res) => {
     [req.params.id, req.user.id]
   );
   if (meta[0] && meta[0].user_id !== req.user.id) {
-    try {
-      await sendReplyNotificationEmail(meta[0].owner_email, meta[0].owner_name, {
-        commenterName: meta[0].commenter_name,
-        listingTitle:  meta[0].title,
-        commentBody:   body.trim(),
-      });
-    } catch {}
+    sendReplyNotificationEmail(meta[0].owner_email, meta[0].owner_name, {
+      commenterName: meta[0].commenter_name,
+      listingTitle:  meta[0].title,
+      commentBody:   body.trim(),
+    }).catch(() => {});
   }
 
   res.json({ comment: rows[0] });
