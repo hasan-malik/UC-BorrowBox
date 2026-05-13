@@ -23,7 +23,7 @@ You need: Docker, Node 20+.
 
 ### 1. Start Postgres
 ```bash
-docker compose up -d
+docker compose up -d   # exposes Postgres on host port 5433
 ```
 
 ### 2. Server
