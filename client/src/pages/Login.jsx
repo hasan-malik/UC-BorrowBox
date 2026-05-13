@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { Button, Input, PageHeader } from '../components/ui.jsx';
+import { Button, Input } from '../components/ui.jsx';
+import AuthCard from '../components/AuthCard.jsx';
 
 export default function Login() {
   const nav = useNavigate();
@@ -36,8 +37,16 @@ export default function Login() {
   }
 
   return (
-    <div className="max-w-sm mx-auto">
-      <PageHeader title="Welcome back" subtitle="Sign in to UC BorrowBox." />
+    <AuthCard
+      title="Welcome back"
+      subtitle="Sign in to UC BorrowBox."
+      footer={
+        <>
+          New to UC BorrowBox?{' '}
+          <Link to="/signup" className="text-ink-900 font-medium">Create an account</Link>
+        </>
+      }
+    >
       <form onSubmit={onSubmit} className="space-y-3">
         <Input
           type="email"
@@ -58,10 +67,6 @@ export default function Login() {
           {busy ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
-      <p className="text-center text-ink-500 text-[14px] mt-6">
-        New to UC BorrowBox?{' '}
-        <Link to="/signup" className="text-ink-900 font-medium">Create an account</Link>
-      </p>
-    </div>
+    </AuthCard>
   );
 }

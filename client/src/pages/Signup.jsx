@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import { Button, Input, Select, PageHeader, RESIDENCES, TERMS } from '../components/ui.jsx';
+import { Button, Input, Select, RESIDENCES, TERMS } from '../components/ui.jsx';
+import AuthCard from '../components/AuthCard.jsx';
 
 export default function Signup() {
   const nav = useNavigate();
@@ -32,8 +33,16 @@ export default function Signup() {
   }
 
   return (
-    <div className="max-w-sm mx-auto">
-      <PageHeader title="Create account" subtitle="Use your utoronto.ca email." />
+    <AuthCard
+      title="Create account"
+      subtitle="Use your utoronto.ca email."
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="text-ink-900 font-medium">Sign in</Link>
+        </>
+      }
+    >
       <form onSubmit={onSubmit} className="space-y-3">
         <Input placeholder="Full name" value={form.name} onChange={set('name')} required />
         <Input
@@ -60,10 +69,6 @@ export default function Signup() {
           {busy ? 'Sending code…' : 'Send verification code'}
         </Button>
       </form>
-      <p className="text-center text-ink-500 text-[14px] mt-6">
-        Already have an account?{' '}
-        <Link to="/login" className="text-ink-900 font-medium">Sign in</Link>
-      </p>
-    </div>
+    </AuthCard>
   );
 }

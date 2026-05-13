@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { Button, Input, PageHeader } from '../components/ui.jsx';
+import { Button, Input } from '../components/ui.jsx';
+import AuthCard from '../components/AuthCard.jsx';
 
 export default function Verify() {
   const loc = useLocation();
@@ -41,11 +42,19 @@ export default function Verify() {
   }
 
   return (
-    <div className="max-w-sm mx-auto">
-      <PageHeader
-        title="Verify your email"
-        subtitle="Enter the 6-digit code we sent to your utoronto email."
-      />
+    <AuthCard
+      title="Verify your email"
+      subtitle="Enter the 6-digit code we sent to your utoronto email."
+      footer={
+        <button
+          onClick={resend}
+          type="button"
+          className="text-ink-500 hover:text-ink-900"
+        >
+          Resend code
+        </button>
+      }
+    >
       <form onSubmit={onSubmit} className="space-y-3">
         <Input
           type="email"
@@ -70,13 +79,6 @@ export default function Verify() {
           {busy ? 'Verifying…' : 'Verify and sign in'}
         </Button>
       </form>
-      <button
-        onClick={resend}
-        type="button"
-        className="block mx-auto mt-5 text-ink-500 hover:text-ink-900 text-[14px]"
-      >
-        Resend code
-      </button>
-    </div>
+    </AuthCard>
   );
 }
