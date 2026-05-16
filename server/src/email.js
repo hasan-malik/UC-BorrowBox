@@ -1,19 +1,7 @@
-import nodemailer from 'nodemailer';
 import 'dotenv/config';
 
-const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-
-const transporter = SMTP_HOST && SMTP_USER && SMTP_PASS
-  ? nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT || 465),
-      secure: Number(SMTP_PORT || 465) === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-      connectionTimeout: 8000,
-      greetingTimeout: 8000,
-      socketTimeout: 10000,
-    })
-  : null;
+const { BREVO_API_KEY, EMAIL_FROM } = process.env;
+const SENDER = { name: 'UC BorrowBox', email: EMAIL_FROM || 'noreply@ucbb.local' };
 
 function wrap(body) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;color:#1c1c1e">
@@ -22,12 +10,31 @@ function wrap(body) {
   </div>`;
 }
 
+// Email provider boundary — to switch providers (SendGrid, Resend, SMTP, …),
+// reimplement only this function. Callers below stay unchanged.
 async function send(to, subject, html) {
-  if (!transporter) {
+  if (!BREVO_API_KEY) {
     console.log(`\n── EMAIL (dev) ── To: ${to} | Subject: ${subject}\n`);
     return;
   }
-  await transporter.sendMail({ from: `UC BorrowBox <${SMTP_USER}>`, to, subject, html });
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': BREVO_API_KEY,
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({
+      sender: SENDER,
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`Brevo send failed (${res.status}): ${detail}`);
+  }
 }
 
 export async function sendOtpEmail(to, code) {
