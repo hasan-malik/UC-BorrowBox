@@ -9,6 +9,7 @@ const router = Router();
 const RESIDENCES = new Set(['whitney', 'sir_daniels', 'morrison']);
 const TERMS = new Set(['summer', 'fall_winter']);
 const UTORONTO_RE = /^[^\s@]+@(mail\.utoronto\.ca|utoronto\.ca)$/i;
+const RESTRICT_UOFT_EMAIL = process.env.RESTRICT_UOFT_EMAIL !== 'false';
 
 function genOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -19,7 +20,7 @@ router.post('/signup', async (req, res) => {
   if (!email || !password || !name || !residence || !term) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  if (!UTORONTO_RE.test(email)) {
+  if (RESTRICT_UOFT_EMAIL && !UTORONTO_RE.test(email)) {
     return res.status(400).json({ error: 'Must be a utoronto.ca email address' });
   }
   if (!RESIDENCES.has(residence)) {
