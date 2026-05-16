@@ -2,12 +2,9 @@
 
 A web app for University College residents at the University of Toronto (Whitney Hall, Sir Daniel's, Morrison) to **share**, **borrow**, and **co-buy** household stuff — toasters, salt, paper towels, whatever. Each listing is tagged with the poster's residence so you can prioritize your own building first.
 
-> Built end-to-end as a personal project: React frontend, Node/Express API, Postgres, JWT auth, email-OTP verification gated to `utoronto.ca` accounts.
+> Built end-to-end: React frontend, Node/Express API, Postgres, JWT auth, email-OTP verification gated to `utoronto.ca` accounts.
 
-<!-- Screenshot: hero/landing page. Drop a file at docs/landing.png and uncomment:
-![Landing](docs/landing.png)
--->
-
+<img width="1470" height="837" alt="Screenshot 2026-05-16 at 6 15 02 am" src="https://github.com/user-attachments/assets/b89a4129-9997-4f98-84c4-99f53ba2062c" />
 ---
 
 ## Features
@@ -23,6 +20,8 @@ A web app for University College residents at the University of Toronto (Whitney
 - **Settings page** to update residence / term, with a profile snapshot
 - **iOS-inspired UI** — system blue, SF-style type scale, grouped lists, hairline dividers, subtle shadows
 
+<img width="1470" height="834" alt="Screenshot 2026-05-16 at 6 15 29 am" src="https://github.com/user-attachments/assets/2036c853-e1dd-4b9d-b786-e13162a0afac" />
+<img width="1470" height="834" alt="Screenshot 2026-05-16 at 6 15 12 am" src="https://github.com/user-attachments/assets/b3c7678d-5aff-489b-a9fc-8f0d4f98ddf1" />
 ---
 
 ## Stack
