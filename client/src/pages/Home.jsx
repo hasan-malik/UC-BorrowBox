@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import {
-  Card, ResidencePill, TypePill, LargeTitle,
+  Card, ResidencePill, TypePill, LargeTitle, VerifiedCheck,
   LISTING_TYPES, RESIDENCES, timeAgo,
 } from '../components/ui.jsx';
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline';
@@ -98,7 +98,10 @@ function ListingRow({ listing: l }) {
 
       {/* footer */}
       <div className="flex items-center gap-3 mt-3 pt-3 border-t border-ink-100">
-        <span className="text-footnote text-ink-500">{l.user_name}</span>
+        <span className="flex items-center gap-1 text-footnote text-ink-500">
+          {l.user_name}
+          {l.user_uoft_verified && <VerifiedCheck />}
+        </span>
         <div className="flex items-center gap-1 ml-auto text-ink-500">
           <ChatBubbleLeftEllipsisIcon className="w-3.5 h-3.5" />
           <span className="text-footnote">{l.comment_count}</span>

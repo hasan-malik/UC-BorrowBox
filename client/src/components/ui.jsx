@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusIcon, ArrowLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, ArrowLeftIcon, ChevronRightIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -205,6 +205,23 @@ export function TypePill({ type }) {
     offer:  'bg-[#E8F8EE] text-[#248a3d]',
   }[type] || 'bg-ink-100 text-ink-500';
   return <Pill className={tone}>{typeLabel(type)}</Pill>;
+}
+
+// ─── Verified check (UofT email) ─────────────────────────────────────────────
+
+// Subtle grey checkmark shown next to users who signed up with a utoronto.ca
+// email. It attests to the email domain only — not residence, which is
+// self-reported — so the tooltip is worded accordingly.
+export function VerifiedCheck({ className = '' }) {
+  return (
+    <span
+      title="Signed up with a University of Toronto email"
+      aria-label="University of Toronto email verified"
+      className={`inline-flex shrink-0 ${className}`}
+    >
+      <CheckCircleIcon className="w-3.5 h-3.5 text-ink-500" />
+    </span>
+  );
 }
 
 // ─── Page header (large-title style) ─────────────────────────────────────────

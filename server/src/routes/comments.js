@@ -5,10 +5,15 @@ import { sendReplyNotificationEmail } from '../email.js';
 
 const router = Router({ mergeParams: true });
 
+// True when the commenter signed up with a University of Toronto email.
+const UOFT_VERIFIED_EXPR =
+  "(lower(u.email) LIKE '%@utoronto.ca' OR lower(u.email) LIKE '%@mail.utoronto.ca') AS user_uoft_verified";
+
 router.get('/listings/:id/comments', async (req, res) => {
   const { rows } = await query(
     `SELECT c.id, c.body, c.created_at,
-            u.id AS user_id, u.name AS user_name, u.residence AS user_residence
+            u.id AS user_id, u.name AS user_name, u.residence AS user_residence,
+            ${UOFT_VERIFIED_EXPR}
        FROM comments c JOIN users u ON u.id = c.user_id
       WHERE c.listing_id = $1
       ORDER BY c.created_at ASC`,

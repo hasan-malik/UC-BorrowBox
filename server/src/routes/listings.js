@@ -8,6 +8,11 @@ const router = Router();
 const TYPES = new Set(['borrow', 'cobuy', 'offer']);
 const RESIDENCES = new Set(['whitney', 'sir_daniels', 'morrison']);
 
+// True when the author signed up with a University of Toronto email.
+// Derived per-query so no column or migration is needed; email itself stays private.
+const UOFT_VERIFIED_EXPR =
+  "(lower(u.email) LIKE '%@utoronto.ca' OR lower(u.email) LIKE '%@mail.utoronto.ca') AS user_uoft_verified";
+
 router.get('/', async (req, res) => {
   const { type, residence, status } = req.query;
   const where = [];
@@ -27,6 +32,7 @@ router.get('/', async (req, res) => {
   const sql = `
     SELECT l.id, l.type, l.title, l.description, l.status, l.created_at,
            u.id AS user_id, u.name AS user_name, u.residence AS user_residence,
+           ${UOFT_VERIFIED_EXPR},
            (SELECT COUNT(*)::int FROM comments c WHERE c.listing_id = l.id) AS comment_count
       FROM listings l
       JOIN users u ON u.id = l.user_id
@@ -40,7 +46,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { rows } = await query(
     `SELECT l.id, l.type, l.title, l.description, l.status, l.created_at,
-            u.id AS user_id, u.name AS user_name, u.residence AS user_residence
+            u.id AS user_id, u.name AS user_name, u.residence AS user_residence,
+            ${UOFT_VERIFIED_EXPR}
        FROM listings l JOIN users u ON u.id = l.user_id
       WHERE l.id = $1`,
     [req.params.id]

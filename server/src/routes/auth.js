@@ -9,7 +9,8 @@ const router = Router();
 const RESIDENCES = new Set(['whitney', 'sir_daniels', 'morrison']);
 const TERMS = new Set(['summer', 'fall_winter']);
 const UTORONTO_RE = /^[^\s@]+@(mail\.utoronto\.ca|utoronto\.ca)$/i;
-const RESTRICT_UOFT_EMAIL = process.env.RESTRICT_UOFT_EMAIL !== 'false';
+// Open signup by default — only gate to utoronto.ca when explicitly enabled.
+const RESTRICT_UOFT_EMAIL = process.env.RESTRICT_UOFT_EMAIL === 'true';
 
 function genOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import {
-  Button, Textarea, ResidencePill, TypePill,
+  Button, Textarea, ResidencePill, TypePill, VerifiedCheck,
   timeAgo, residenceShort, Hairline, SectionLabel,
 } from '../components/ui.jsx';
 import { ChevronLeftIcon, LockClosedIcon } from '@heroicons/react/24/solid';
@@ -110,7 +110,9 @@ export default function ListingDetail() {
 
         <h1 className="text-title-3 text-ink-900 leading-snug">{listing.title}</h1>
         <p className="text-footnote text-ink-500 mt-1">
-          {listing.user_name} · {residenceShort(listing.user_residence)} · {timeAgo(listing.created_at)}
+          {listing.user_name}
+          {listing.user_uoft_verified && <VerifiedCheck className="ml-0.5 align-middle" />}
+          {` · ${residenceShort(listing.user_residence)} · ${timeAgo(listing.created_at)}`}
         </p>
 
         {listing.description && (
@@ -149,6 +151,7 @@ export default function ListingDetail() {
             <div key={c.id} className="px-4 py-3.5">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-footnote font-semibold text-ink-900">{c.user_name}</span>
+                {c.user_uoft_verified && <VerifiedCheck />}
                 <ResidencePill residence={c.user_residence} />
                 <span className="text-caption-1 text-ink-500 ml-auto">{timeAgo(c.created_at)}</span>
               </div>
