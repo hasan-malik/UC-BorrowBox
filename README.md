@@ -4,6 +4,8 @@ A web app for University College residents at the University of Toronto (Whitney
 
 > Built end-to-end: React frontend, Node/Express API, Postgres, JWT auth, email-OTP verification gated to `utoronto.ca` accounts.
 
+**Live:** https://ucborrowbox.netlify.app
+
 <img width="1470" height="837" alt="Screenshot 2026-05-16 at 6 15 02 am" src="https://github.com/user-attachments/assets/b89a4129-9997-4f98-84c4-99f53ba2062c" />
 ---
 
@@ -142,11 +144,3 @@ All endpoints are under `/api`. Auth via `Authorization: Bearer <token>` on rout
 - iOS-style design tokens: porting Apple's type scale (`text-title-1`, `text-subhead`, etc.) and system colours into a Tailwind config makes pages composable without one-off magic numbers.
 - Production hardening checklist for a "real" deploy: locking down CORS, enabling SSL on the Postgres connection, replacing dev placeholders for secrets, gating routes via JWT middleware, and making the API base URL configurable per environment.
 
----
-
-## Roadmap
-
-- [ ] Image uploads for listings (S3 / Cloudinary)
-- [ ] Push notifications via web push (in addition to email)
-- [ ] Direct messages, separate from public listing comments
-- [ ] Listing search by keyword
