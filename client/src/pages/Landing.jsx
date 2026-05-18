@@ -32,7 +32,7 @@ const FEATURES = [
 
 export default function Landing() {
   return (
-    <div className="min-h-[calc(100vh-44px)]">
+    <div className="min-h-[calc(100dvh-44px)]">
       {/* ── Hero ─────────────────────────────────────── */}
       <section className="max-w-2xl mx-auto px-6 pt-16 pb-12 text-center">
         <div className="inline-flex items-center gap-1.5 bg-[#EAF4FF] text-[#007aff] text-[12px] font-semibold px-3 h-6 rounded-full mb-8 tracking-[0.1px]">
@@ -41,7 +41,7 @@ export default function Landing() {
 
         <h1
           className="text-ink-900 font-black tracking-[-2.5px] mb-5"
-          style={{ fontSize: 'clamp(52px, 9vw, 76px)', lineHeight: 1.02 }}
+          style={{ fontSize: 'clamp(40px, 9vw, 76px)', lineHeight: 1.02 }}
         >
           Share more.<br />Spend less.
         </h1>
@@ -78,7 +78,7 @@ export default function Landing() {
 
       {/* ── Bottom CTA ───────────────────────────────── */}
       <section className="max-w-2xl mx-auto px-4 pb-20">
-        <div className="bg-white rounded-card shadow-card px-8 py-10 text-center">
+        <div className="bg-white rounded-card shadow-card px-6 sm:px-8 py-10 text-center">
           <p className="text-[28px] font-bold tracking-[-0.5px] text-ink-900 leading-snug mb-2">
             Your neighbours are already here.
           </p>

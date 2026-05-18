@@ -102,9 +102,9 @@ export default function Settings() {
 
 function Row({ label, value }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3.5">
-      <span className="text-body text-ink-900">{label}</span>
-      <span className="text-body text-ink-500">{value}</span>
+    <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+      <span className="text-body text-ink-900 shrink-0">{label}</span>
+      <span className="text-body text-ink-500 min-w-0 break-all text-right">{value}</span>
     </div>
   );
 }

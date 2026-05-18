@@ -1,6 +1,6 @@
 export default function AuthCard({ title, subtitle, children, footer }) {
   return (
-    <div className="min-h-[calc(100vh-44px)] flex items-center justify-center px-4 py-8">
+    <div className="min-h-[calc(100dvh-44px)] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
         {/* Sheet card */}
         <div className="bg-white rounded-sheet shadow-sheet px-6 pt-7 pb-6">
