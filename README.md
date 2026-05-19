@@ -2,7 +2,7 @@
 
 A web app for University College residents at the University of Toronto (Whitney Hall, Sir Daniel's, Morrison) to **share**, **borrow**, and **co-buy** household stuff — toasters, salt, paper towels, whatever. Each listing is tagged with the poster's residence so you can prioritize your own building first.
 
-> Built end-to-end: React frontend, Node/Express API, Postgres, JWT auth, email-OTP verification gated to `utoronto.ca` accounts.
+> Built end-to-end: React frontend, Node/Express API, Postgres, JWT auth, 6-digit email-OTP verification, and a verified badge for accounts that sign up with a `utoronto.ca` address.
 
 **Live:** https://ucborrowbox.netlify.app
 
@@ -11,7 +11,7 @@ A web app for University College residents at the University of Toronto (Whitney
 
 ## Features
 
-- **`utoronto.ca`-gated signup** with 6-digit OTP email verification (10-minute expiry)
+- **Open signup** with 6-digit OTP email verification (10-minute expiry); accounts that use a `utoronto.ca` address get a subtle grey checkmark next to their name on listings and replies
 - **Three listing types** with distinct visual treatment:
   - **Borrow** — "Does anyone have X I can use?"
   - **Co-buy** — "Want to split the cost of X?"
