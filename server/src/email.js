@@ -1,7 +1,7 @@
 import 'dotenv/config';
+import nodemailer from 'nodemailer';
 
-const { BREVO_API_KEY, EMAIL_FROM } = process.env;
-const SENDER = { name: 'UC BorrowBox', email: EMAIL_FROM || 'noreply@ucbb.local' };
+const { GMAIL_USER, GMAIL_APP_PASSWORD, BREVO_API_KEY, EMAIL_FROM } = process.env;
 
 function wrap(body) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;color:#1c1c1e">
@@ -10,31 +10,53 @@ function wrap(body) {
   </div>`;
 }
 
-// Email provider boundary — to switch providers (SendGrid, Resend, SMTP, …),
-// reimplement only this function. Callers below stay unchanged.
+// Lazy singleton — only build the transport once GMAIL creds are present.
+let gmailTransport = null;
+function getGmailTransport() {
+  if (!gmailTransport) {
+    gmailTransport = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+    });
+  }
+  return gmailTransport;
+}
+
+// Email provider boundary. Priority: Gmail SMTP → Brevo (legacy) → dev log.
 async function send(to, subject, html) {
-  if (!BREVO_API_KEY) {
-    console.log(`\n── EMAIL (dev) ── To: ${to} | Subject: ${subject}\n`);
+  if (GMAIL_USER && GMAIL_APP_PASSWORD) {
+    await getGmailTransport().sendMail({
+      from: `"UC BorrowBox" <${GMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
     return;
   }
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'api-key': BREVO_API_KEY,
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-    },
-    body: JSON.stringify({
-      sender: SENDER,
-      to: [{ email: to }],
-      subject,
-      htmlContent: html,
-    }),
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`Brevo send failed (${res.status}): ${detail}`);
+
+  if (BREVO_API_KEY) {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: 'UC BorrowBox', email: EMAIL_FROM || 'noreply@ucbb.local' },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Brevo send failed (${res.status}): ${detail}`);
+    }
+    return;
   }
+
+  console.log(`\n── EMAIL (dev) ── To: ${to} | Subject: ${subject}\n`);
 }
 
 export async function sendOtpEmail(to, code) {
