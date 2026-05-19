@@ -50,7 +50,7 @@ export default function Login() {
       <form onSubmit={onSubmit} className="space-y-3">
         <Input
           type="email"
-          placeholder="you@mail.utoronto.ca"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

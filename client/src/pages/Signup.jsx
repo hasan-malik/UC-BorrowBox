@@ -35,7 +35,6 @@ export default function Signup() {
   return (
     <AuthCard
       title="Create account"
-      subtitle="Use your utoronto.ca email."
       footer={
         <>
           Already have an account?{' '}
@@ -47,7 +46,7 @@ export default function Signup() {
         <Input placeholder="Full name" value={form.name} onChange={set('name')} required />
         <Input
           type="email"
-          placeholder="you@mail.utoronto.ca"
+          placeholder="Email address"
           value={form.email}
           onChange={set('email')}
           required

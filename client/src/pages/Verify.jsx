@@ -44,7 +44,7 @@ export default function Verify() {
   return (
     <AuthCard
       title="Verify your email"
-      subtitle="Enter the 6-digit code we sent to your utoronto email."
+      subtitle="We sent a 6-digit code to your email."
       footer={
         <button
           onClick={resend}
@@ -58,7 +58,7 @@ export default function Verify() {
       <form onSubmit={onSubmit} className="space-y-3">
         <Input
           type="email"
-          placeholder="you@mail.utoronto.ca"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
