@@ -21,6 +21,7 @@ A web app for University College residents at the University of Toronto (Whitney
 - **Email notifications** for account creation, sign-in, new listing posted, and replies to your listing
 - **Settings page** to update residence / term, with a profile snapshot
 - **iOS-inspired UI** — system blue, SF-style type scale, grouped lists, hairline dividers, subtle shadows
+- **Mobile-friendly** — desktop-first layout retrofitted with `clamp()` typography, dynamic viewport units (`dvh`) for iOS Safari, and Tailwind `sm:` breakpoints so phones get tighter padding without regressing the desktop view
 
 <img width="1470" height="834" alt="Screenshot 2026-05-16 at 6 15 29 am" src="https://github.com/user-attachments/assets/2036c853-e1dd-4b9d-b786-e13162a0afac" />
 <img width="1470" height="834" alt="Screenshot 2026-05-16 at 6 15 12 am" src="https://github.com/user-attachments/assets/b3c7678d-5aff-489b-a9fc-8f0d4f98ddf1" />
