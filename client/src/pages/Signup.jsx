@@ -35,6 +35,7 @@ export default function Signup() {
   return (
     <AuthCard
       title="Create account"
+      subtitle="Use your utoronto.ca address to get verified."
       footer={
         <>
           Already have an account?{' '}
