@@ -222,12 +222,22 @@ function TermsModal({ onClose }) {
 
           <Section number="7" title="Liability">
             UC BorrowBox is a community good — you agree to use it at your own
-            risk. UC BorrowBox is not responsible for the condition or safety of
-            items exchanged, the conduct of other users, or any loss or dispute
-            arising from arrangements made through the platform. UC BorrowBox
+            risk. The service is provided on an "as is" and "as available"
+            basis, with no warranties of any kind, express or implied. To the
+            fullest extent permitted by law, UC BorrowBox and its operators
+            shall not be liable for any direct, indirect, incidental,
+            consequential, or punitive damages — including personal injury,
+            property damage, financial loss, or emotional harm — arising from
+            your use of the platform, the condition or safety of items
+            exchanged, the conduct of other users, or any agreement, dispute,
+            or interaction between users. By creating an account and using UC
+            BorrowBox, you release UC BorrowBox and its operators from all such
+            claims, and you agree to indemnify and hold them harmless against
+            any third-party claim, demand, or expense arising from your
+            listings, comments, conduct, or breach of these terms. UC BorrowBox
             is an independent student initiative, and is not affiliated with,
-            operated by, or endorsed by University College or the University of
-            Toronto.
+            operated by, or endorsed by University College or the University
+            of Toronto.
           </Section>
 
           <p className="text-footnote text-ink-500 mt-2">
