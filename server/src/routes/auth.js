@@ -13,6 +13,10 @@ const TERMS = new Set(['summer', 'fall_winter']);
 // because we can't reliably deliver Brevo email from a freemail sender
 // to non-UofT recipients (DMARC). See server/src/email.js.
 const RESTRICT_UOFT_EMAIL = process.env.RESTRICT_UOFT_EMAIL === 'true';
+// Email OTP verification is off by default — Brevo deliverability from a
+// freemail sender is unreliable even to UofT addresses. Set to "true"
+// once we own a verified domain to bring the UofT OTP path back.
+const EMAIL_VERIFICATION_ENABLED = process.env.EMAIL_VERIFICATION_ENABLED === 'true';
 
 function genOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -45,7 +49,7 @@ router.post('/signup', async (req, res) => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
-  if (isUoft) {
+  if (isUoft && EMAIL_VERIFICATION_ENABLED) {
     // UofT path: deliverable via Brevo → email OTP, must verify before login.
     const otp = genOtp();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
@@ -69,10 +73,15 @@ router.post('/signup', async (req, res) => {
     return res.json({ ok: true, message: 'Verification code sent. Check your utoronto email.' });
   }
 
-  // Non-UofT path: undeliverable via current setup → auto-verify, no email,
-  // log them in immediately. They lose the UofT-verified badge (which is
-  // derived from email domain at query time, not from this flag).
-  console.log('[auth] /signup: non-UofT email, auto-verifying without OTP.', { email: normalizedEmail });
+  // Auto-verify path: either the recipient isn't UofT (Brevo can't deliver
+  // to freemail/Gmail under DMARC), or email verification is globally off.
+  // Insert with verified=TRUE, no OTP, log them in immediately. The UofT
+  // badge in listings is derived from the email domain at query time, so
+  // skipping OTP doesn't grant the badge to non-UofT users.
+  console.log('[auth] /signup: auto-verifying without OTP.', {
+    email: normalizedEmail,
+    reason: isUoft ? 'EMAIL_VERIFICATION_ENABLED=false' : 'non-UofT recipient',
+  });
   let userId;
   if (existing.rows[0]) {
     await query(
@@ -91,7 +100,7 @@ router.post('/signup', async (req, res) => {
   }
   const user = { id: userId, email: normalizedEmail, name, residence, term };
   const token = signToken(user);
-  console.log('[auth] /signup: non-UofT auto-verify complete, returning token.', { email: normalizedEmail, userId });
+  console.log('[auth] /signup: auto-verify complete, returning token.', { email: normalizedEmail, userId });
   return res.json({ ok: true, autoVerified: true, token, user });
 });
 
