@@ -1,7 +1,17 @@
 import 'dotenv/config';
 import nodemailer from 'nodemailer';
 
-const { GMAIL_USER, GMAIL_APP_PASSWORD, BREVO_API_KEY, EMAIL_FROM } = process.env;
+const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
+
+console.log('[email] module loaded.', {
+  GMAIL_USER_set: Boolean(GMAIL_USER),
+  GMAIL_USER_value: GMAIL_USER || '<unset>',
+  GMAIL_USER_length: GMAIL_USER ? GMAIL_USER.length : 0,
+  GMAIL_APP_PASSWORD_set: Boolean(GMAIL_APP_PASSWORD),
+  GMAIL_APP_PASSWORD_length: GMAIL_APP_PASSWORD ? GMAIL_APP_PASSWORD.length : 0,
+  GMAIL_APP_PASSWORD_has_whitespace: GMAIL_APP_PASSWORD ? /\s/.test(GMAIL_APP_PASSWORD) : false,
+  GMAIL_USER_has_quotes: GMAIL_USER ? /["']/.test(GMAIL_USER) : false,
+});
 
 function wrap(body) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;color:#1c1c1e">
@@ -10,56 +20,70 @@ function wrap(body) {
   </div>`;
 }
 
-// Lazy singleton — only build the transport once GMAIL creds are present.
 let gmailTransport = null;
 function getGmailTransport() {
   if (!gmailTransport) {
+    console.log('[email] creating gmail transport for user:', GMAIL_USER);
     gmailTransport = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      logger: true,
+      debug: true,
+    });
+    gmailTransport.verify((err, success) => {
+      if (err) console.error('[email] gmail transport verify FAILED:', err);
+      else console.log('[email] gmail transport verify OK:', success);
     });
   }
   return gmailTransport;
 }
 
-// Email provider boundary. Priority: Gmail SMTP → Brevo (legacy) → dev log.
 async function send(to, subject, html) {
-  if (GMAIL_USER && GMAIL_APP_PASSWORD) {
-    await getGmailTransport().sendMail({
+  console.log('[email] send() called.', { to, subject });
+
+  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+    console.error('[email] ABORT: Gmail credentials missing.', {
+      GMAIL_USER_set: Boolean(GMAIL_USER),
+      GMAIL_APP_PASSWORD_set: Boolean(GMAIL_APP_PASSWORD),
+    });
+    throw new Error('Gmail credentials not configured');
+  }
+
+  console.log('[email] sending via Gmail SMTP...');
+  const startedAt = Date.now();
+  try {
+    const info = await getGmailTransport().sendMail({
       from: `"UC BorrowBox" <${GMAIL_USER}>`,
       to,
       subject,
       html,
     });
-    return;
-  }
-
-  if (BREVO_API_KEY) {
-    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'api-key': BREVO_API_KEY,
-        'Content-Type': 'application/json',
-        accept: 'application/json',
-      },
-      body: JSON.stringify({
-        sender: { name: 'UC BorrowBox', email: EMAIL_FROM || 'noreply@ucbb.local' },
-        to: [{ email: to }],
-        subject,
-        htmlContent: html,
-      }),
+    console.log('[email] Gmail send OK.', {
+      to,
+      subject,
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response,
+      ms: Date.now() - startedAt,
     });
-    if (!res.ok) {
-      const detail = await res.text().catch(() => '');
-      throw new Error(`Brevo send failed (${res.status}): ${detail}`);
-    }
-    return;
+  } catch (err) {
+    console.error('[email] Gmail send FAILED.', {
+      to,
+      subject,
+      ms: Date.now() - startedAt,
+      errName: err.name,
+      errCode: err.code,
+      errMessage: err.message,
+      errResponse: err.response,
+      errResponseCode: err.responseCode,
+    });
+    throw err;
   }
-
-  console.log(`\n── EMAIL (dev) ── To: ${to} | Subject: ${subject}\n`);
 }
 
 export async function sendOtpEmail(to, code) {
+  console.log('[email] sendOtpEmail()', { to, codeLength: String(code).length });
   await send(to, 'Your UC BorrowBox verification code', wrap(`
     <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">Verify your email</h2>
     <p style="color:#8e8e93;margin:0 0 24px">Enter this code in UC BorrowBox to complete sign-up.</p>
@@ -69,6 +93,7 @@ export async function sendOtpEmail(to, code) {
 }
 
 export async function sendWelcomeEmail(to, name) {
+  console.log('[email] sendWelcomeEmail()', { to, name });
   await send(to, 'Welcome to UC BorrowBox', wrap(`
     <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">Welcome, ${name}!</h2>
     <p style="color:#3a3a3c;margin:0 0 16px">Your UC BorrowBox account is verified and ready to go.</p>
@@ -77,6 +102,7 @@ export async function sendWelcomeEmail(to, name) {
 }
 
 export async function sendLoginAlertEmail(to, name) {
+  console.log('[email] sendLoginAlertEmail()', { to, name });
   await send(to, 'New sign-in to UC BorrowBox', wrap(`
     <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">New sign-in</h2>
     <p style="color:#3a3a3c;margin:0 0 16px">Hi ${name}, we noticed a new sign-in to your UC BorrowBox account.</p>
@@ -85,6 +111,7 @@ export async function sendLoginAlertEmail(to, name) {
 }
 
 export async function sendListingPostedEmail(to, name, { type, title }) {
+  console.log('[email] sendListingPostedEmail()', { to, name, type, title });
   const typeLabel = { borrow: 'Borrow', cobuy: 'Co-buy', offer: 'Offer' }[type] || type;
   await send(to, `Your listing is live — "${title}"`, wrap(`
     <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">Listing posted</h2>
@@ -98,6 +125,7 @@ export async function sendListingPostedEmail(to, name, { type, title }) {
 }
 
 export async function sendReplyNotificationEmail(to, ownerName, { commenterName, listingTitle, commentBody }) {
+  console.log('[email] sendReplyNotificationEmail()', { to, ownerName, commenterName, listingTitle });
   await send(to, `${commenterName} replied to your listing`, wrap(`
     <h2 style="font-size:22px;font-weight:700;margin:0 0 8px">New reply</h2>
     <p style="color:#3a3a3c;margin:0 0 20px">Hi ${ownerName}, <strong>${commenterName}</strong> replied to your listing <strong>"${listingTitle}"</strong>:</p>

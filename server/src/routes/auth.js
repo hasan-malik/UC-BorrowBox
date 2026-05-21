@@ -58,13 +58,17 @@ router.post('/signup', async (req, res) => {
     );
   }
 
-  sendOtpEmail(normalizedEmail, otp).catch((err) => console.error('OTP email failed:', err));
+  console.log('[auth] /signup: triggering OTP send.', { email: normalizedEmail, otpLength: otp.length });
+  sendOtpEmail(normalizedEmail, otp)
+    .then(() => console.log('[auth] /signup: OTP send completed.', { email: normalizedEmail }))
+    .catch((err) => console.error('[auth] /signup: OTP send FAILED.', { email: normalizedEmail, err: err && (err.stack || err.message || err) }));
 
   res.json({ ok: true, message: 'Verification code sent. Check your utoronto email.' });
 });
 
 router.post('/verify', async (req, res) => {
   const { email, code } = req.body || {};
+  console.log('[auth] /verify: called.', { email, codeLength: code ? String(code).length : 0 });
   if (!email || !code) return res.status(400).json({ error: 'Missing email or code' });
 
   const { rows } = await query(
@@ -90,7 +94,10 @@ router.post('/verify', async (req, res) => {
     [user.id]
   );
 
-  sendWelcomeEmail(user.email, user.name).catch(() => {});
+  console.log('[auth] /verify: OK, account verified.', { email: user.email });
+  sendWelcomeEmail(user.email, user.name)
+    .then(() => console.log('[auth] /verify: welcome email sent.', { email: user.email }))
+    .catch((err) => console.error('[auth] /verify: welcome email FAILED.', { email: user.email, err: err && (err.stack || err.message || err) }));
 
   const token = signToken(user);
   res.json({
@@ -110,7 +117,10 @@ router.post('/resend', async (req, res) => {
   const otp = genOtp();
   const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
   await query('UPDATE users SET otp_code=$1, otp_expires_at=$2 WHERE id=$3', [otp, otpExpires, rows[0].id]);
-  sendOtpEmail(normalizedEmail, otp).catch((err) => console.error('OTP email failed:', err));
+  console.log('[auth] /resend: triggering OTP send.', { email: normalizedEmail, otpLength: otp.length });
+  sendOtpEmail(normalizedEmail, otp)
+    .then(() => console.log('[auth] /resend: OTP send completed.', { email: normalizedEmail }))
+    .catch((err) => console.error('[auth] /resend: OTP send FAILED.', { email: normalizedEmail, err: err && (err.stack || err.message || err) }));
   res.json({ ok: true });
 });
 
