@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
@@ -88,7 +88,7 @@ export default function Signup() {
               aria-checked={agreed}
               aria-label="I agree to the Terms and Conditions"
               onClick={() => setAgreed(!agreed)}
-              className={`shrink-0 mt-0.5 w-[22px] h-[22px] rounded-md border flex items-center justify-center transition active:opacity-70 ${
+              className={`relative shrink-0 mt-0.5 w-[22px] h-[22px] rounded-md border flex items-center justify-center transition active:opacity-70 before:absolute before:-inset-3 before:content-[''] ${
                 agreed
                   ? 'bg-[#007aff] border-[#007aff]'
                   : 'bg-white border-ink-300'
@@ -139,6 +139,14 @@ export default function Signup() {
 }
 
 function TermsModal({ onClose }) {
+  // Lock body scroll while the modal is open. iOS Safari otherwise lets the
+  // user rubber-band the page behind the modal when they overscroll inside it.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] sm:p-4"
@@ -149,7 +157,7 @@ function TermsModal({ onClose }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-lg sm:rounded-sheet sm:shadow-sheet rounded-t-sheet max-h-[88vh] flex flex-col overflow-hidden"
+        className="bg-white w-full sm:max-w-lg sm:rounded-sheet sm:shadow-sheet rounded-t-sheet max-h-[88dvh] flex flex-col overflow-hidden"
       >
         <div className="flex items-center justify-between px-4 h-12 border-b border-ink-200 shrink-0">
           <div className="w-14" />
@@ -165,7 +173,10 @@ function TermsModal({ onClose }) {
           </button>
         </div>
 
-        <div className="overflow-y-auto px-5 py-5 text-body text-ink-900 leading-relaxed">
+        <div
+          className="overflow-y-auto overscroll-contain px-5 pt-5 text-body text-ink-900 leading-relaxed"
+          style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
+        >
           <p className="text-footnote text-ink-500 mb-5">
             By creating an account on UC BorrowBox, you agree to the terms below.
             These terms exist to keep the community trustworthy and respectful.
@@ -230,14 +241,17 @@ function TermsModal({ onClose }) {
             property damage, financial loss, or emotional harm — arising from
             your use of the platform, the condition or safety of items
             exchanged, the conduct of other users, or any agreement, dispute,
-            or interaction between users. By creating an account and using UC
-            BorrowBox, you release UC BorrowBox and its operators from all such
-            claims, and you agree to indemnify and hold them harmless against
-            any third-party claim, demand, or expense arising from your
-            listings, comments, conduct, or breach of these terms. UC BorrowBox
-            is an independent student initiative, and is not affiliated with,
-            operated by, or endorsed by University College or the University
-            of Toronto.
+            or interaction between users. UC BorrowBox is an independent
+            student initiative, and is not affiliated with, operated by, or
+            endorsed by University College or the University of Toronto.
+          </Section>
+
+          <Section number="8" title="Release of claims">
+            By creating an account and using UC BorrowBox, you release UC
+            BorrowBox and its operators from all such claims, and you agree to
+            indemnify and hold them harmless against any third-party claim,
+            demand, or expense arising from your listings, comments, conduct,
+            or breach of these terms.
           </Section>
 
           <p className="text-subhead text-ink-700 mt-5 leading-relaxed">
