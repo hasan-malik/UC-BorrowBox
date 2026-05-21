@@ -80,7 +80,7 @@ export default function Landing() {
       <section className="max-w-2xl mx-auto px-4 pb-20">
         <div className="bg-white rounded-card shadow-card px-6 sm:px-8 py-10 text-center">
           <p className="text-[28px] font-bold tracking-[-0.5px] text-ink-900 leading-snug mb-2">
-            Be part of UC Culture.
+            Be part of University College culture.
           </p>
           <p className="text-subhead text-ink-500 mb-7">
             Takes 30 seconds.
