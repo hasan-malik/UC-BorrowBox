@@ -224,12 +224,10 @@ function TermsModal({ onClose }) {
             UC BorrowBox is a community good — you agree to use it at your own
             risk. UC BorrowBox is not responsible for the condition or safety of
             items exchanged, the conduct of other users, or any loss or dispute
-            arising from arrangements made through the platform.
-          </Section>
-
-          <Section number="8" title="Changes to these terms">
-            These terms may be updated from time to time. Continued use of UC
-            BorrowBox after a change constitutes acceptance of the revised terms.
+            arising from arrangements made through the platform. UC BorrowBox
+            is an independent student initiative, and is not affiliated with,
+            operated by, or endorsed by University College or the University of
+            Toronto.
           </Section>
 
           <p className="text-footnote text-ink-500 mt-2">
