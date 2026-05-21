@@ -1,17 +1,64 @@
 import 'dotenv/config';
-import nodemailer from 'nodemailer';
 
-const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
+// Email delivery via Brevo's HTTPS API.
+//
+// Why HTTPS and not SMTP: Railway blocks outbound SMTP ports (25/465/587)
+// at the network layer, so any nodemailer/Gmail-SMTP path silently times
+// out with ETIMEDOUT after ~120s. Brevo's REST endpoint uses port 443,
+// bypassing the block entirely.
+
+const { BREVO_API_KEY, EMAIL_FROM } = process.env;
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+const BREVO_ACCOUNT_URL = 'https://api.brevo.com/v3/account';
+
+// Sender email. Brevo requires this to match a verified sender on your
+// account (verify one at https://app.brevo.com/senders). If EMAIL_FROM is
+// unset or unverified, Brevo will either reject the call or replace the
+// sender with its own *.brevosend.com subdomain — watch the response body
+// in the logs to see what happened.
+const SENDER_EMAIL = EMAIL_FROM || 'noreply@ucbb.local';
+const SENDER_NAME = 'UC BorrowBox';
 
 console.log('[email] module loaded.', {
-  GMAIL_USER_set: Boolean(GMAIL_USER),
-  GMAIL_USER_value: GMAIL_USER || '<unset>',
-  GMAIL_USER_length: GMAIL_USER ? GMAIL_USER.length : 0,
-  GMAIL_APP_PASSWORD_set: Boolean(GMAIL_APP_PASSWORD),
-  GMAIL_APP_PASSWORD_length: GMAIL_APP_PASSWORD ? GMAIL_APP_PASSWORD.length : 0,
-  GMAIL_APP_PASSWORD_has_whitespace: GMAIL_APP_PASSWORD ? /\s/.test(GMAIL_APP_PASSWORD) : false,
-  GMAIL_USER_has_quotes: GMAIL_USER ? /["']/.test(GMAIL_USER) : false,
+  BREVO_API_KEY_set: Boolean(BREVO_API_KEY),
+  BREVO_API_KEY_length: BREVO_API_KEY ? BREVO_API_KEY.length : 0,
+  BREVO_API_KEY_starts_with_xkeysib_: BREVO_API_KEY ? BREVO_API_KEY.startsWith('xkeysib-') : false,
+  BREVO_API_KEY_has_whitespace: BREVO_API_KEY ? /\s/.test(BREVO_API_KEY) : false,
+  BREVO_API_KEY_has_quotes: BREVO_API_KEY ? /["']/.test(BREVO_API_KEY) : false,
+  EMAIL_FROM_set: Boolean(EMAIL_FROM),
+  resolved_sender: { name: SENDER_NAME, email: SENDER_EMAIL },
 });
+
+// Startup self-check: hit Brevo's /account endpoint to confirm the key is
+// valid and the network path works. 200 → all good. 401 → bad key.
+// Non-blocking; errors only logged.
+async function verifyBrevoKey() {
+  if (!BREVO_API_KEY) {
+    console.error('[email] BREVO_API_KEY NOT SET. send() will throw until BREVO_API_KEY is configured.');
+    return;
+  }
+  try {
+    const res = await fetch(BREVO_ACCOUNT_URL, {
+      headers: { 'api-key': BREVO_API_KEY, accept: 'application/json' },
+    });
+    const body = await res.text();
+    if (res.ok) {
+      console.log('[email] Brevo API key verify OK at startup.', { status: res.status, body });
+    } else {
+      console.error('[email] Brevo API key verify FAILED at startup.', {
+        status: res.status,
+        statusText: res.statusText,
+        body,
+      });
+    }
+  } catch (err) {
+    console.error('[email] Brevo startup self-check threw.', {
+      errName: err.name,
+      errMessage: err.message,
+    });
+  }
+}
+verifyBrevoKey();
 
 function wrap(body) {
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:440px;margin:0 auto;padding:32px 24px;color:#1c1c1e">
@@ -20,66 +67,87 @@ function wrap(body) {
   </div>`;
 }
 
-let gmailTransport = null;
-function getGmailTransport() {
-  if (!gmailTransport) {
-    console.log('[email] creating gmail transport for user:', GMAIL_USER);
-    gmailTransport = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
-      logger: true,
-      debug: true,
-    });
-    gmailTransport.verify((err, success) => {
-      if (err) console.error('[email] gmail transport verify FAILED:', err);
-      else console.log('[email] gmail transport verify OK:', success);
-    });
-  }
-  return gmailTransport;
-}
-
 async function send(to, subject, html) {
-  console.log('[email] send() called.', { to, subject });
+  console.log('[email] send() called.', { to, subject, htmlLength: html.length });
 
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.error('[email] ABORT: Gmail credentials missing.', {
-      GMAIL_USER_set: Boolean(GMAIL_USER),
-      GMAIL_APP_PASSWORD_set: Boolean(GMAIL_APP_PASSWORD),
-    });
-    throw new Error('Gmail credentials not configured');
+  if (!BREVO_API_KEY) {
+    console.error('[email] ABORT: BREVO_API_KEY not set.');
+    throw new Error('BREVO_API_KEY not configured');
   }
 
-  console.log('[email] sending via Gmail SMTP...');
+  const payload = {
+    sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+  };
+
+  console.log('[email] sending via Brevo HTTPS API.', {
+    url: BREVO_API_URL,
+    sender: payload.sender,
+    to: payload.to,
+    subject: payload.subject,
+    htmlLength: html.length,
+  });
+
   const startedAt = Date.now();
+
+  let res;
   try {
-    const info = await getGmailTransport().sendMail({
-      from: `"UC BorrowBox" <${GMAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
-    console.log('[email] Gmail send OK.', {
-      to,
-      subject,
-      messageId: info.messageId,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      response: info.response,
-      ms: Date.now() - startedAt,
+    res = await fetch(BREVO_API_URL, {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
   } catch (err) {
-    console.error('[email] Gmail send FAILED.', {
+    console.error('[email] Brevo fetch threw (network error).', {
       to,
       subject,
       ms: Date.now() - startedAt,
       errName: err.name,
-      errCode: err.code,
       errMessage: err.message,
-      errResponse: err.response,
-      errResponseCode: err.responseCode,
+      errCause: err.cause && (err.cause.message || String(err.cause)),
     });
     throw err;
   }
+
+  console.log('[email] Brevo HTTP response received.', {
+    to,
+    subject,
+    status: res.status,
+    statusText: res.statusText,
+    ok: res.ok,
+    ms: Date.now() - startedAt,
+  });
+
+  const rawBody = await res.text();
+  let parsedBody = null;
+  try { parsedBody = JSON.parse(rawBody); } catch { /* not JSON — keep raw */ }
+
+  if (!res.ok) {
+    console.error('[email] Brevo send FAILED.', {
+      to,
+      subject,
+      status: res.status,
+      statusText: res.statusText,
+      body: parsedBody || rawBody,
+      ms: Date.now() - startedAt,
+    });
+    throw new Error(`Brevo send failed (${res.status}): ${rawBody}`);
+  }
+
+  console.log('[email] Brevo send OK.', {
+    to,
+    subject,
+    status: res.status,
+    brevoMessageId: parsedBody && parsedBody.messageId,
+    body: parsedBody || rawBody,
+    ms: Date.now() - startedAt,
+  });
 }
 
 export async function sendOtpEmail(to, code) {
