@@ -221,10 +221,10 @@ function TermsModal({ onClose }) {
           </Section>
 
           <Section number="7" title="Liability">
-            You use UC BorrowBox at your own risk. UC BorrowBox is not responsible
-            for the condition or safety of items exchanged, the conduct of other
-            users, or any loss or dispute arising from arrangements made through
-            the platform.
+            UC BorrowBox is a community good — you agree to use it at your own
+            risk. UC BorrowBox is not responsible for the condition or safety of
+            items exchanged, the conduct of other users, or any loss or dispute
+            arising from arrangements made through the platform.
           </Section>
 
           <Section number="8" title="Changes to these terms">
