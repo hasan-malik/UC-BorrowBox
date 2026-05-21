@@ -2,14 +2,16 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../db.js';
 import { signToken, requireAuth } from '../auth.js';
-import { sendOtpEmail, sendWelcomeEmail, sendLoginAlertEmail } from '../email.js';
+import { sendOtpEmail, sendWelcomeEmail, sendLoginAlertEmail, isUtorontoEmail } from '../email.js';
 
 const router = Router();
 
 const RESIDENCES = new Set(['whitney', 'sir_daniels', 'morrison']);
 const TERMS = new Set(['summer', 'fall_winter']);
-const UTORONTO_RE = /^[^\s@]+@(mail\.utoronto\.ca|utoronto\.ca)$/i;
-// Open signup by default — only gate to utoronto.ca when explicitly enabled.
+// When true, non-UofT signups are blocked entirely (legacy strict mode).
+// When false (default), non-UofT users sign up without OTP verification,
+// because we can't reliably deliver Brevo email from a freemail sender
+// to non-UofT recipients (DMARC). See server/src/email.js.
 const RESTRICT_UOFT_EMAIL = process.env.RESTRICT_UOFT_EMAIL === 'true';
 
 function genOtp() {
@@ -21,7 +23,7 @@ router.post('/signup', async (req, res) => {
   if (!email || !password || !name || !residence || !term) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  if (RESTRICT_UOFT_EMAIL && !UTORONTO_RE.test(email)) {
+  if (RESTRICT_UOFT_EMAIL && !isUtorontoEmail(email)) {
     return res.status(400).json({ error: 'Must be a utoronto.ca email address' });
   }
   if (!RESIDENCES.has(residence)) {
@@ -35,35 +37,62 @@ router.post('/signup', async (req, res) => {
   }
 
   const normalizedEmail = email.toLowerCase().trim();
+  const isUoft = isUtorontoEmail(normalizedEmail);
   const existing = await query('SELECT id, verified FROM users WHERE email = $1', [normalizedEmail]);
   if (existing.rows[0]?.verified) {
     return res.status(409).json({ error: 'An account with that email already exists' });
   }
 
   const password_hash = await bcrypt.hash(password, 10);
-  const otp = genOtp();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
+  if (isUoft) {
+    // UofT path: deliverable via Brevo → email OTP, must verify before login.
+    const otp = genOtp();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    if (existing.rows[0]) {
+      await query(
+        `UPDATE users SET password_hash=$1, name=$2, residence=$3, term=$4,
+           otp_code=$5, otp_expires_at=$6, verified=FALSE WHERE email=$7`,
+        [password_hash, name, residence, term, otp, otpExpires, normalizedEmail]
+      );
+    } else {
+      await query(
+        `INSERT INTO users (email, password_hash, name, residence, term, otp_code, otp_expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [normalizedEmail, password_hash, name, residence, term, otp, otpExpires]
+      );
+    }
+    console.log('[auth] /signup: UofT email, triggering OTP send.', { email: normalizedEmail, otpLength: otp.length });
+    sendOtpEmail(normalizedEmail, otp)
+      .then(() => console.log('[auth] /signup: OTP send completed.', { email: normalizedEmail }))
+      .catch((err) => console.error('[auth] /signup: OTP send FAILED.', { email: normalizedEmail, err: err && (err.stack || err.message || err) }));
+    return res.json({ ok: true, message: 'Verification code sent. Check your utoronto email.' });
+  }
+
+  // Non-UofT path: undeliverable via current setup → auto-verify, no email,
+  // log them in immediately. They lose the UofT-verified badge (which is
+  // derived from email domain at query time, not from this flag).
+  console.log('[auth] /signup: non-UofT email, auto-verifying without OTP.', { email: normalizedEmail });
+  let userId;
   if (existing.rows[0]) {
     await query(
       `UPDATE users SET password_hash=$1, name=$2, residence=$3, term=$4,
-         otp_code=$5, otp_expires_at=$6 WHERE email=$7`,
-      [password_hash, name, residence, term, otp, otpExpires, normalizedEmail]
+         verified=TRUE, otp_code=NULL, otp_expires_at=NULL WHERE email=$5`,
+      [password_hash, name, residence, term, normalizedEmail]
     );
+    userId = existing.rows[0].id;
   } else {
-    await query(
-      `INSERT INTO users (email, password_hash, name, residence, term, otp_code, otp_expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [normalizedEmail, password_hash, name, residence, term, otp, otpExpires]
+    const { rows } = await query(
+      `INSERT INTO users (email, password_hash, name, residence, term, verified)
+       VALUES ($1, $2, $3, $4, $5, TRUE) RETURNING id`,
+      [normalizedEmail, password_hash, name, residence, term]
     );
+    userId = rows[0].id;
   }
-
-  console.log('[auth] /signup: triggering OTP send.', { email: normalizedEmail, otpLength: otp.length });
-  sendOtpEmail(normalizedEmail, otp)
-    .then(() => console.log('[auth] /signup: OTP send completed.', { email: normalizedEmail }))
-    .catch((err) => console.error('[auth] /signup: OTP send FAILED.', { email: normalizedEmail, err: err && (err.stack || err.message || err) }));
-
-  res.json({ ok: true, message: 'Verification code sent. Check your utoronto email.' });
+  const user = { id: userId, email: normalizedEmail, name, residence, term };
+  const token = signToken(user);
+  console.log('[auth] /signup: non-UofT auto-verify complete, returning token.', { email: normalizedEmail, userId });
+  return res.json({ ok: true, autoVerified: true, token, user });
 });
 
 router.post('/verify', async (req, res) => {

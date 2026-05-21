@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
+import { useAuth } from '../auth.jsx';
 import { Button, Input, Select, RESIDENCES, TERMS } from '../components/ui.jsx';
 import AuthCard from '../components/AuthCard.jsx';
 
 export default function Signup() {
   const nav = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -23,8 +25,15 @@ export default function Signup() {
     setErr('');
     setBusy(true);
     try {
-      await api('/auth/signup', { method: 'POST', body: form });
-      nav('/verify', { state: { email: form.email } });
+      const data = await api('/auth/signup', { method: 'POST', body: form });
+      if (data.token && data.user) {
+        // Non-UofT email: server auto-verified and returned a session — log in directly.
+        login(data.token, data.user);
+        nav('/');
+      } else {
+        // UofT email: OTP sent, go to the verify screen.
+        nav('/verify', { state: { email: form.email } });
+      }
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -35,7 +44,7 @@ export default function Signup() {
   return (
     <AuthCard
       title="Create account"
-      subtitle="Use your utoronto.ca address to get verified."
+      subtitle="Use your utoronto.ca address to get a verified badge."
       footer={
         <>
           Already have an account?{' '}

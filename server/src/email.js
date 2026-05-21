@@ -19,6 +19,16 @@ const BREVO_ACCOUNT_URL = 'https://api.brevo.com/v3/account';
 const SENDER_EMAIL = EMAIL_FROM || 'noreply@ucbb.local';
 const SENDER_NAME = 'UC BorrowBox';
 
+// We can only reliably deliver to UofT addresses (Microsoft 365) because
+// our Brevo sender is a freemail address that fails DMARC at strict
+// receivers like gmail.com. Recipient-domain gate below short-circuits
+// send() for non-UofT addresses so we don't burn Brevo quota on mail
+// that would be silently dropped.
+const UTORONTO_EMAIL_RE = /^[^\s@]+@(mail\.utoronto\.ca|utoronto\.ca)$/i;
+export function isUtorontoEmail(email) {
+  return UTORONTO_EMAIL_RE.test(String(email || '').trim());
+}
+
 console.log('[email] module loaded.', {
   BREVO_API_KEY_set: Boolean(BREVO_API_KEY),
   BREVO_API_KEY_length: BREVO_API_KEY ? BREVO_API_KEY.length : 0,
@@ -73,6 +83,11 @@ async function send(to, subject, html) {
   if (!BREVO_API_KEY) {
     console.error('[email] ABORT: BREVO_API_KEY not set.');
     throw new Error('BREVO_API_KEY not configured');
+  }
+
+  if (!isUtorontoEmail(to)) {
+    console.log('[email] SKIP: recipient is not a UofT address — sending disabled.', { to, subject });
+    return;
   }
 
   const payload = {
