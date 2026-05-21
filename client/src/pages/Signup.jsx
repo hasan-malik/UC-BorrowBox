@@ -241,9 +241,9 @@ function TermsModal({ onClose }) {
           </Section>
 
           <p className="text-subhead text-ink-700 mt-5 leading-relaxed">
-            Above all, UC BorrowBox is built on trust between neighbours.
-            Borrow when you need to, share when you can, and look out for
-            each other.
+            Above all, UC BorrowBox is a core part of University College
+            culture embodying our community's trust. Borrow when you need
+            to, share when you can, and look out for each other.
           </p>
 
           <p className="text-footnote text-ink-500 mt-5">
