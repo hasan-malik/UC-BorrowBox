@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../auth.js';
 import { sendListingPostedEmail } from '../email.js';
+import { demoUserFilter } from '../demo.js';
 
 const router = Router();
 
@@ -29,6 +30,8 @@ router.get('/', async (req, res) => {
     params.push(status);
     where.push(`l.status = $${params.length}`);
   }
+  const demoFilter = demoUserFilter();
+  if (demoFilter) where.push(demoFilter);
   const sql = `
     SELECT l.id, l.type, l.title, l.description, l.status, l.created_at,
            u.id AS user_id, u.name AS user_name, u.residence AS user_residence,
@@ -44,12 +47,13 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
+  const demoFilter = demoUserFilter();
   const { rows } = await query(
     `SELECT l.id, l.type, l.title, l.description, l.status, l.created_at,
             u.id AS user_id, u.name AS user_name, u.residence AS user_residence,
             ${UOFT_VERIFIED_EXPR}
        FROM listings l JOIN users u ON u.id = l.user_id
-      WHERE l.id = $1`,
+      WHERE l.id = $1${demoFilter ? ` AND ${demoFilter}` : ''}`,
     [req.params.id]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Listing not found' });
