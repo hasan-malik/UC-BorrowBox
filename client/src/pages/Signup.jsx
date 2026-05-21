@@ -240,7 +240,13 @@ function TermsModal({ onClose }) {
             of Toronto.
           </Section>
 
-          <p className="text-footnote text-ink-500 mt-2">
+          <p className="text-subhead text-ink-700 mt-5 leading-relaxed">
+            Above all, UC BorrowBox is built on trust between neighbours.
+            Borrow when you need to, share when you can, and look out for
+            each other.
+          </p>
+
+          <p className="text-footnote text-ink-500 mt-5">
             Questions or concerns? Contact{' '}
             <a
               href="mailto:ucborrowbox@gmail.com"
